@@ -12,7 +12,8 @@ import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
-import io.ktor.client.response.HttpResponse
+import io.ktor.client.request.request
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.utils.EmptyContent
 import io.ktor.http.*
 import io.ktor.http.content.OutgoingContent
@@ -159,7 +160,7 @@ import {{packageName}}.auth.*
         requestConfig.updateForAuth(authNames)
         val headers = requestConfig.headers
 
-        return client.call {
+        return client.request {
             this.url {
                 this.takeFrom(URLBuilder(baseUrl))
                 appendPath(requestConfig.path.trimStart('/').split('/'))
@@ -174,7 +175,7 @@ import {{packageName}}.auth.*
             if (requestConfig.method in listOf(RequestMethod.PUT, RequestMethod.POST, RequestMethod.PATCH))
                 this.body = body
 
-        }.response
+        }
     }
 
     private fun RequestConfig.updateForAuth(authNames: kotlin.collections.List<String>) {

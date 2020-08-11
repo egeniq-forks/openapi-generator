@@ -23,7 +23,6 @@ import kotlinx.android.parcel.Parcelize
 {{/multiplatform}}
 {{#multiplatform}}
 import kotlinx.serialization.*
-import kotlinx.serialization.internal.CommonEnumSerializer
 {{/multiplatform}}
 {{#serializableModel}}
 import java.io.Serializable
@@ -63,7 +62,7 @@ import java.io.Serializable
     * {{{description}}}
     * Values: {{#allowableValues}}{{#enumVars}}{{&name}}{{^-last}},{{/-last}}{{/enumVars}}{{/allowableValues}}
     */
-    {{#multiplatform}}@Serializable(with = {{nameInCamelCase}}.Serializer::class){{/multiplatform}}
+    {{#multiplatform}}@Serializable{{/multiplatform}}
     {{#nonPublicApi}}internal {{/nonPublicApi}}enum class {{{nameInCamelCase}}}(val value: {{^isContainer}}{{dataType}}{{/isContainer}}{{#isContainer}}kotlin.String{{/isContainer}}){
     {{#allowableValues}}
     {{#enumVars}}
@@ -83,10 +82,6 @@ import java.io.Serializable
         {{/multiplatform}}
     {{/enumVars}}
     {{/allowableValues}}
-    {{#multiplatform}}
-
-        {{#nonPublicApi}}internal {{/nonPublicApi}}object Serializer : CommonEnumSerializer<{{nameInCamelCase}}>("{{nameInCamelCase}}", values(), values().map { it.value.toString() }.toTypedArray())
-    {{/multiplatform}}
     }
 {{/isEnum}}
 {{/vars}}
