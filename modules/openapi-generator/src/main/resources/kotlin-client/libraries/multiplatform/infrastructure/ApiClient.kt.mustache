@@ -18,9 +18,7 @@ import io.ktor.client.utils.EmptyContent
 import io.ktor.http.*
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.content.PartData
-import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
 
 import {{apiPackage}}.*
 import {{modelPackage}}.*
@@ -31,15 +29,14 @@ import {{packageName}}.auth.*
         httpClientEngine: HttpClientEngine?,
         serializer: KotlinxSerializer) {
 
-    @UseExperimental(UnstableDefault::class)
     constructor(
             baseUrl: String,
             httpClientEngine: HttpClientEngine?,
-            jsonConfiguration: JsonConfiguration) :
-            this(baseUrl, httpClientEngine, KotlinxSerializer(Json(jsonConfiguration)))
+            json: Json = Json { }
+    ) : this(baseUrl, httpClientEngine, KotlinxSerializer(json))
 
     private val serializer: JsonSerializer by lazy {
-        serializer.apply { setMappers(this) }.ignoreOutgoingContent()
+        serializer.ignoreOutgoingContent()
     }
 
     private val client: HttpClient by lazy {
@@ -62,15 +59,6 @@ import {{packageName}}.auth.*
 
     {{#nonPublicApi}}internal {{/nonPublicApi}}companion object {
         protected val UNSAFE_HEADERS = listOf(HttpHeaders.ContentType)
-
-        private fun setMappers(serializer: KotlinxSerializer) {
-            {{#apiInfo}}{{#apis}}
-            {{classname}}.setMappers(serializer)
-            {{/apis}}{{/apiInfo}}
-            {{#models}}
-            {{#model}}{{^isAlias}}serializer.setMapper({{modelPackage}}.{{classname}}::class, {{modelPackage}}.{{classname}}.{{#isEnum}}Serializer{{/isEnum}}{{^isEnum}}serializer(){{/isEnum}}){{/isAlias}}{{/model}}
-            {{/models}}
-        }
     }
 
     /**
