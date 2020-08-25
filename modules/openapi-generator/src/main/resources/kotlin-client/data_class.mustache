@@ -23,6 +23,9 @@ import kotlinx.android.parcel.Parcelize
 {{/multiplatform}}
 {{#multiplatform}}
 import kotlinx.serialization.*
+{{#discriminator}}
+import {{packageName}}.util.serializers.*
+{{/discriminator}}
 {{/multiplatform}}
 {{#serializableModel}}
 import java.io.Serializable
@@ -37,7 +40,7 @@ import java.io.Serializable
 {{#parcelizeModels}}
 @Parcelize
 {{/parcelizeModels}}
-{{#multiplatform}}@Serializable{{/multiplatform}}{{#moshi}}{{#moshiCodeGen}}@JsonClass(generateAdapter = true){{/moshiCodeGen}}{{/moshi}}{{#jackson}}{{#discriminator}}{{>typeInfoAnnotation}}{{/discriminator}}{{/jackson}}
+{{#multiplatform}}@Serializable{{#discriminator}}(with = Custom{{classname}}Serializer::class){{/discriminator}}{{/multiplatform}}{{#moshi}}{{#moshiCodeGen}}@JsonClass(generateAdapter = true){{/moshiCodeGen}}{{/moshi}}{{#jackson}}{{#discriminator}}{{>typeInfoAnnotation}}{{/discriminator}}{{/jackson}}
 {{#isDeprecated}}
 @Deprecated(message = "This schema is deprecated.")
 {{/isDeprecated}}
