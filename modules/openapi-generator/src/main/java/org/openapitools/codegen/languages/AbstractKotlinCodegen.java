@@ -104,6 +104,7 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
                 "false",
                 "for",
                 "fun",
+                "header",
                 "if",
                 "in",
                 "interface",
