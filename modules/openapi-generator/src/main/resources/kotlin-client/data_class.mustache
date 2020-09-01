@@ -86,7 +86,7 @@ import java.io.Serializable
         {{/jackson}}
         {{/multiplatform}}
         {{#multiplatform}}
-        {{&name}}({{{value}}}){{^-last}},{{/-last}}{{#-last}};{{/-last}}
+        @SerialName(value = {{^isString}}"{{/isString}}{{{value}}}{{^isString}}"{{/isString}}) {{&name}}({{{value}}}){{^-last}},{{/-last}}{{#-last}};{{/-last}}
         {{/multiplatform}}
     {{/enumVars}}
     {{/allowableValues}}
