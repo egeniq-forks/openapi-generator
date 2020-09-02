@@ -23,7 +23,9 @@ import kotlinx.serialization.internal.StringDescriptor
     constructor(
         baseUrl: kotlin.String = "{{{basePath}}}",
         httpClientEngine: HttpClientEngine? = null,
-        json: Json = Json { }
+        json: Json = Json {
+            ignoreUnknownKeys = true
+        }
     ) : this(baseUrl, httpClientEngine, KotlinxSerializer(json))
 
     {{#operation}}
