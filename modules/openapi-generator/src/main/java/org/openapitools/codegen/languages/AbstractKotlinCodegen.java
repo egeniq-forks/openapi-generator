@@ -842,7 +842,6 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
                 final Schema parentModel = allDefinitions.get(parentSchema);
                 final CodegenModel parentCodegenModel = super.fromModel(m.parent,
                         parentModel);
-                System.out.println("parentCodegenModel="+parentCodegenModel);
                 m = reconcileProperties(m, parentCodegenModel);
 
                 // get the next parent
