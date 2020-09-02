@@ -778,7 +778,8 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
             Iterator<CodegenProperty> iterator = codegenProperties.iterator();
             while (iterator.hasNext()) {
                 CodegenProperty codegenProperty = iterator.next();
-                if (codegenProperty.baseName.equals(parentModelCodegenProperty.baseName)) {
+                if (codegenProperty.baseName.equals(parentModelCodegenProperty.baseName)
+                        && parentModelCodegenProperty.isEnum) {
                     // We found a property in the child class that is
                     // a duplicate of the one in the parent,
                     // so mark it as inherited & copy the data type.
