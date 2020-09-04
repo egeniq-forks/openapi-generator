@@ -104,6 +104,7 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
                 "false",
                 "for",
                 "fun",
+                "header",
                 "if",
                 "in",
                 "interface",
@@ -756,6 +757,59 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
         return input.substring(0, 1).toUpperCase(Locale.ROOT) + input.substring(1);
     }
 
+    private CodegenModel reconcileProperties(CodegenModel codegenModel,
+                                                    CodegenModel parentCodegenModel) {
+        // To support inheritance in this generator, we will analyze
+        // the parent and child models, look for properties that match, and mark them
+        // as inherited while copying the data types over to the child.
+        // Because the only way we have inheritance is with discriminator interface, in
+        // which it is mandatory to implement and override all parent properties.
+
+        // Get the properties for the parent and child models
+        final List<CodegenProperty> parentModelCodegenProperties = parentCodegenModel.vars;
+        List<CodegenProperty> codegenProperties = codegenModel.vars;
+        codegenModel.allVars = new ArrayList<CodegenProperty>(codegenProperties);
+        codegenModel.parentVars = parentCodegenModel.allVars;
+
+        // Iterate over all of the parent model properties
+        for (CodegenProperty parentModelCodegenProperty : parentModelCodegenProperties) {
+            // Now that we have found a prop in the parent class,
+            // and search the child class for the same prop.
+            Iterator<CodegenProperty> iterator = codegenProperties.iterator();
+            while (iterator.hasNext()) {
+                CodegenProperty codegenProperty = iterator.next();
+                if (codegenProperty.baseName.equals(parentModelCodegenProperty.baseName)
+                        && parentModelCodegenProperty.isEnum) {
+                    // We found a property in the child class that is
+                    // a duplicate of the one in the parent,
+                    // so mark it as inherited & copy the data type.
+                    codegenProperty.isInherited = true;
+                    codegenProperty.isEnum = parentModelCodegenProperty.isEnum;
+                    codegenProperty.baseType = parentModelCodegenProperty.baseType;
+                    codegenProperty.dataType = parentModelCodegenProperty.dataType;
+                    codegenProperty.datatypeWithEnum = parentModelCodegenProperty.datatypeWithEnum;
+                }
+            }
+        }
+
+        // We add all parent properties to the child, excluding the ones already defined
+        final List<CodegenProperty> missingParentProperties = new ArrayList<CodegenProperty>();
+        final Set<String> allVarsNameSet = codegenModel.allVars.stream()
+                .map(CodegenProperty::getBaseName).collect(Collectors.toSet());
+        for (CodegenProperty property : codegenModel.parentVars) {
+            if (!allVarsNameSet.contains(property.getBaseName())) {
+                property.isInherited = true;
+                missingParentProperties.add(property);
+            }
+        }
+
+        // Insert the inherited parent properties first
+        codegenModel.allVars.addAll(0, missingParentProperties);
+        codegenModel.vars = codegenProperties;
+
+        return codegenModel;
+    }
+
     @Override
     protected boolean isReservedWord(String word) {
         // We want case-sensitive escaping, to avoid unnecessary backtick-escaping.
@@ -779,6 +833,23 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
     public CodegenModel fromModel(String name, Schema schema) {
         CodegenModel m = super.fromModel(name, schema);
         m.optionalVars = m.optionalVars.stream().distinct().collect(Collectors.toList());
+
+        Map<String, Schema> allDefinitions = ModelUtils.getSchemas(this.openAPI);
+        if (allDefinitions != null) {
+            String parentSchema = m.parentSchema;
+
+            // multilevel inheritance: reconcile properties of all the parents
+            while (parentSchema != null) {
+                final Schema parentModel = allDefinitions.get(parentSchema);
+                final CodegenModel parentCodegenModel = super.fromModel(m.parent,
+                        parentModel);
+                m = reconcileProperties(m, parentCodegenModel);
+
+                // get the next parent
+                parentSchema = parentCodegenModel.parentSchema;
+            }
+        }
+
         // Update allVars/requiredVars/optionalVars with isInherited
         // Each of these lists contains elements that are similar, but they are all cloned
         // via CodegenModel.removeAllDuplicatedProperty and therefore need to be updated
