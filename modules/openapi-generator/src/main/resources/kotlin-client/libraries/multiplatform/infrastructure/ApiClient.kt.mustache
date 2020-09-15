@@ -7,6 +7,7 @@ import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.JsonSerializer
 import io.ktor.client.features.json.serializer.KotlinxSerializer
+import io.ktor.client.features.logging.*
 import io.ktor.client.request.accept
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.forms.MultiPartFormDataContent
@@ -43,7 +44,14 @@ import {{packageName}}.auth.*
 
     private val client: HttpClient by lazy {
         val jsonConfig: JsonFeature.Config.() -> Unit = { this.serializer = this@ApiClient.serializer }
-        val clientConfig: (HttpClientConfig<*>) -> Unit = { it.install(JsonFeature, jsonConfig) }
+        val loggingConfig: Logging.Config.() -> Unit = {
+            this.logger = Logger.SIMPLE
+            this.level = LogLevel.ALL
+        }
+        val clientConfig: (HttpClientConfig<*>) -> Unit = {
+            it.install(JsonFeature, jsonConfig)
+            it.install(Logging, loggingConfig)
+        }
         httpClientEngine?.let { HttpClient(it, clientConfig) } ?: HttpClient(clientConfig)
     }
     {{#hasAuthMethods}}
