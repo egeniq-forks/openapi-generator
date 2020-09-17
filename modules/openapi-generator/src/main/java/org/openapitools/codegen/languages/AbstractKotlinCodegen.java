@@ -73,6 +73,7 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
     public AbstractKotlinCodegen() {
         super();
         supportsInheritance = true;
+        requiresDiscriminatorInheritance = true;
         setSortModelPropertiesByRequiredFlag(true);
 
         languageSpecificPrimitives = new HashSet<String>(Arrays.asList(
@@ -765,8 +766,16 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
         // Because the only way we have inheritance is with discriminator interface, in
         // which it is mandatory to implement and override all parent properties.
 
+
         // Get the properties for the parent and child models
-        final List<CodegenProperty> parentModelCodegenProperties = parentCodegenModel.vars;
+        final List<CodegenProperty> parentModelCodegenProperties = parentCodegenModel.allVars;
+
+        // This list includes the grandparent properties, if applicable
+        final List<CodegenProperty> grandParentModelCodegenProperties = new ArrayList<CodegenProperty>();
+        grandParentModelCodegenProperties.addAll(parentModelCodegenProperties);
+        grandParentModelCodegenProperties
+                .removeAll(parentCodegenModel.vars);
+
         List<CodegenProperty> codegenProperties = codegenModel.vars;
         codegenModel.allVars = new ArrayList<CodegenProperty>(codegenProperties);
         codegenModel.parentVars = parentCodegenModel.allVars;
@@ -785,6 +794,16 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
                     // so mark it as inherited & copy the data type.
                     codegenProperty.isInherited = true;
                     codegenProperty.isEnum = parentModelCodegenProperty.isEnum;
+
+                    // Save the parent class name if the properties match since we use it for the enum definition
+                    if (grandParentModelCodegenProperties
+                            .stream()
+                            .map(CodegenProperty::getBaseName)
+                            .collect(Collectors.toSet())
+                            .contains(codegenProperty.baseName)) {
+                        codegenProperty.parentClassName = parentCodegenModel.parent;
+                    }
+
                     codegenProperty.baseType = parentModelCodegenProperty.baseType;
                     codegenProperty.dataType = parentModelCodegenProperty.dataType;
                     codegenProperty.datatypeWithEnum = parentModelCodegenProperty.datatypeWithEnum;
