@@ -163,6 +163,7 @@ public class CodegenProperty implements Cloneable, IJsonSchemaValidationProperti
     public Map<String, Object> vendorExtensions = new HashMap<String, Object>();
     public boolean hasValidation; // true if pattern, maximum, etc are set (only used in the mustache template)
     public boolean isInherited;
+    public String parentClassName;
     public String discriminatorValue;
     public String nameInLowerCase; // property name in lower case
     public String nameInCamelCase; // property name in camel case
@@ -674,6 +675,7 @@ public class CodegenProperty implements Cloneable, IJsonSchemaValidationProperti
         sb.append(", vendorExtensions=").append(vendorExtensions);
         sb.append(", hasValidation=").append(hasValidation);
         sb.append(", isInherited=").append(isInherited);
+        sb.append(", parentClassName=").append(parentClassName).append('\'');
         sb.append(", discriminatorValue='").append(discriminatorValue).append('\'');
         sb.append(", nameInCamelCase='").append(nameInCamelCase).append('\'');
         sb.append(", nameInSnakeCase='").append(nameInSnakeCase).append('\'');
@@ -768,6 +770,7 @@ public class CodegenProperty implements Cloneable, IJsonSchemaValidationProperti
                 Objects.equals(items, that.items) &&
                 Objects.equals(mostInnerItems, that.mostInnerItems) &&
                 Objects.equals(vendorExtensions, that.vendorExtensions) &&
+                Objects.equals(parentClassName, that.parentClassName) &&
                 Objects.equals(discriminatorValue, that.discriminatorValue) &&
                 Objects.equals(nameInCamelCase, that.nameInCamelCase) &&
                 Objects.equals(nameInSnakeCase, that.nameInSnakeCase) &&
@@ -793,7 +796,7 @@ public class CodegenProperty implements Cloneable, IJsonSchemaValidationProperti
                 isBoolean, isDate, isDateTime, isUuid, isUri, isEmail, isFreeFormObject,
                 isListContainer, isMapContainer, isEnum, isReadOnly, isWriteOnly, isNullable,
                 isSelfReference, isCircularReference, isDiscriminator, _enum, allowableValues, items, mostInnerItems,
-                vendorExtensions, hasValidation, isInherited, discriminatorValue, nameInCamelCase,
+                vendorExtensions, hasValidation, isInherited, parentClassName, discriminatorValue, nameInCamelCase,
                 nameInSnakeCase, enumName, maxItems, minItems, isXmlAttribute, xmlPrefix, xmlName,
                 xmlNamespace, isXmlWrapped);
     }
