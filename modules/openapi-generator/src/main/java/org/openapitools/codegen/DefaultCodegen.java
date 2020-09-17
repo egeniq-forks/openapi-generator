@@ -195,6 +195,16 @@ public class DefaultCodegen implements CodegenConfig {
      */
     protected boolean supportsInheritance;
     /**
+     * True if the code generator requires a discriminator for proper multi-level inheritance.
+     * This is used for models which have multi-level inheritance where the discriminator uses a
+     * different type compared to the regular model type.
+     * For example, the Kotlin code generator uses "interface" for discriminator types and a
+     * "data class" for regular models. "data class" does not support inheritance
+     * which is why we need a discriminator to properly transform the "data class" to an interface.
+     */
+    protected boolean requiresDiscriminatorInheritance;
+
+    /**
      * True if the language generator supports the 'additionalProperties' keyword
      * as sibling of a composed (allOf/anyOf/oneOf) schema.
      * Note: all language generators should support this to comply with the OAS specification.
@@ -499,6 +509,7 @@ public class DefaultCodegen implements CodegenConfig {
         for (String name : allModels.keySet()) {
             CodegenModel cm = allModels.get(name);
             CodegenModel parent = allModels.get(cm.getParent());
+
             // if a discriminator exists on the parent, don't add this child to the inheritance hierarchy
             // TODO Determine what to do if the parent discriminator name == the grandparent discriminator name
             while (parent != null) {
@@ -509,6 +520,15 @@ public class DefaultCodegen implements CodegenConfig {
                 parent.hasChildren = true;
                 Schema parentSchema = this.openAPI.getComponents().getSchemas().get(parent.name);
                 if (parentSchema.getDiscriminator() == null) {
+                    // If the parent has a grandparent, it is a child itself.
+                    // Since it's also a parent, it needs to have some sort of discriminator for proper inheritance.
+                    // That's why we copy the grandparent's discriminator when the parent has no discriminator
+                    CodegenModel grandParent = allModels.get(parent.getParent());
+                    if (requiresDiscriminatorInheritance && grandParent != null
+                            && parent.getDiscriminator() == null) {
+                        parent.setDiscriminator(grandParent.getDiscriminator());
+                    }
+
                     parent = allModels.get(parent.getParent());
                 } else {
                     parent = null;

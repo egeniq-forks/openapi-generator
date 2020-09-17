@@ -73,6 +73,7 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
     public AbstractKotlinCodegen() {
         super();
         supportsInheritance = true;
+        requiresDiscriminatorInheritance = true;
         setSortModelPropertiesByRequiredFlag(true);
 
         languageSpecificPrimitives = new HashSet<String>(Arrays.asList(
