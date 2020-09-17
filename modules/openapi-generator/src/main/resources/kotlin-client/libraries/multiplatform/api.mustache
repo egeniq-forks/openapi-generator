@@ -25,6 +25,7 @@ import kotlinx.serialization.internal.StringDescriptor
         httpClientEngine: HttpClientEngine? = null,
         json: Json = Json {
             ignoreUnknownKeys = true
+            isLenient = true
         }
     ) : this(baseUrl, httpClientEngine, KotlinxSerializer(json))
 
