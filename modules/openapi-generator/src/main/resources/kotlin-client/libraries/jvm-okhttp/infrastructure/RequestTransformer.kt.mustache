@@ -1,0 +1,5 @@
+package {{packageName}}.infrastructure
+
+abstract class RequestTransformer {
+    abstract fun apply(requestConfig: RequestConfig) : RequestConfig
+}

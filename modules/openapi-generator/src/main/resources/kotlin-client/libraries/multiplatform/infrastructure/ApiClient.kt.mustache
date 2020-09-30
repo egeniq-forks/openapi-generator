@@ -60,6 +60,8 @@ import {{packageName}}.auth.*
     private val authentications: kotlin.collections.Map<String, Authentication>? = null
     {{/hasAuthMethods}}
 
+    val requestTransformers = mutableListOf<RequestTransformer>()
+
     {{#nonPublicApi}}internal {{/nonPublicApi}}companion object {
         protected val UNSAFE_HEADERS = listOf(HttpHeaders.ContentType)
     }
@@ -149,21 +151,25 @@ import {{packageName}}.auth.*
 
     protected suspend fun request(requestConfig: RequestConfig, body: OutgoingContent = EmptyContent, authNames: kotlin.collections.List<String>): HttpResponse {
         requestConfig.updateForAuth(authNames)
-        val headers = requestConfig.headers
+        var modifiedConfig = requestConfig
+        requestTransformers.forEach {
+            modifiedConfig = it.apply(modifiedConfig)
+        }
+        val headers = modifiedConfig.headers
 
         return client.request {
             this.url {
                 this.takeFrom(URLBuilder(baseUrl))
-                appendPath(requestConfig.path.trimStart('/').split('/'))
-                requestConfig.query.forEach { query ->
+                appendPath(modifiedConfig.path.trimStart('/').split('/'))
+                modifiedConfig.query.forEach { query ->
                     query.value.forEach { value ->
                         parameter(query.key, value)
                     }
                 }
             }
-            this.method = requestConfig.method.httpMethod
+            this.method = modifiedConfig.method.httpMethod
             headers.filter { header -> !UNSAFE_HEADERS.contains(header.key) }.forEach { header -> this.header(header.key, header.value) }
-            if (requestConfig.method in listOf(RequestMethod.PUT, RequestMethod.POST, RequestMethod.PATCH))
+            if (modifiedConfig.method in listOf(RequestMethod.PUT, RequestMethod.POST, RequestMethod.PATCH))
                 this.body = body
 
         }
