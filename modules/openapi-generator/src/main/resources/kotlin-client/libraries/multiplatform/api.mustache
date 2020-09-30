@@ -14,6 +14,7 @@ import kotlinx.serialization.*
 import kotlinx.serialization.internal.StringDescriptor
 
 {{#operations}}
+@ExperimentalStdlibApi
 {{#nonPublicApi}}internal {{/nonPublicApi}}class {{classname}} constructor(
     baseUrl: kotlin.String = "{{{basePath}}}",
     httpClientEngine: HttpClientEngine? = null,
@@ -39,6 +40,7 @@ import kotlinx.serialization.internal.StringDescriptor
     {{#returnType}}
     @Suppress("UNCHECKED_CAST")
     {{/returnType}}
+    @Throws(Exception::class)
     suspend fun {{operationId}}({{#allParams}}{{{paramName}}}: {{{dataType}}}{{^required}}?{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}}): HttpResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Unit{{/returnType}}> {
 
         val localVariableAuthNames = listOf<String>({{#authMethods}}"{{name}}"{{#hasMore}}, {{/hasMore}}{{/authMethods}})
