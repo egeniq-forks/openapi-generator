@@ -776,7 +776,42 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
         grandParentModelCodegenProperties
                 .removeAll(parentCodegenModel.vars);
 
+        // When we have multi-level interface inheritance, properties which are not marked as required
+        // are getting lost. This can be fine in some languages, but not in Kotlin.
+        // In Kotlin, the child has to define every property that's defined in the interface.
+        // That's why we iterate over the CodegenModel and add any missing properties & mark them as inherited
         List<CodegenProperty> codegenProperties = codegenModel.vars;
+        if (codegenModel.getDiscriminator() == null) {
+            Set<String> mappedCodegenProperties = codegenProperties.stream()
+                    .map(CodegenProperty::getBaseName).collect(Collectors.toSet());
+            List<String> mappedRequiredCodegenProperties = codegenModel.requiredVars.stream()
+                    .map(CodegenProperty::getBaseName).collect(Collectors.toList());
+            List<String> mappedOptionalCodegenProperties = codegenModel.optionalVars.stream()
+                    .map(CodegenProperty::getBaseName).collect(Collectors.toList());
+            for (int i = 0; i < parentCodegenModel.allVars.size(); i++) {
+                CodegenProperty property = parentCodegenModel.allVars.get(i);
+                String name = property.getBaseName();
+                if (!mappedCodegenProperties.contains(name)) {
+                    // Mark the property as inherited before adding it to the child model
+                    property.isInherited = true;
+
+                    // Check if the property is also in the required & optional variables
+                    // and replace it accordingly to match inheritance state.
+                    int requiredPropertyIndex = mappedRequiredCodegenProperties.indexOf(name);
+                    int optionalPropertyIndex = mappedOptionalCodegenProperties.indexOf(name);
+                    if (requiredPropertyIndex >= 0) {
+                        codegenModel.requiredVars.set(requiredPropertyIndex, property);
+                    }
+                    if (optionalPropertyIndex >= 0) {
+                        codegenModel.optionalVars.set(optionalPropertyIndex, property);
+                    }
+
+                    // Insert the inherited properties at the top
+                    codegenProperties.add(i, property);
+                }
+            }
+        }
+
         codegenModel.allVars = new ArrayList<CodegenProperty>(codegenProperties);
         codegenModel.parentVars = parentCodegenModel.allVars;
 
