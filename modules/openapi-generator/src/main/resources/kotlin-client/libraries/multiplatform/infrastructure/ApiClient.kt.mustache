@@ -28,7 +28,8 @@ import {{packageName}}.auth.*
 {{#nonPublicApi}}internal {{/nonPublicApi}}open class ApiClient(
         private val baseUrl: String,
         httpClientEngine: HttpClientEngine?,
-        serializer: KotlinxSerializer) {
+        serializer: KotlinxSerializer,
+        logLevel: LogLevel) {
 
     constructor(
             baseUrl: String,
@@ -36,8 +37,9 @@ import {{packageName}}.auth.*
             json: Json = Json {
                 ignoreUnknownKeys = true
                 isLenient = true
-            }
-    ) : this(baseUrl, httpClientEngine, KotlinxSerializer(json))
+            },
+            logLevel: LogLevel
+    ) : this(baseUrl, httpClientEngine, KotlinxSerializer(json), logLevel)
 
     private val serializer: JsonSerializer by lazy {
         serializer.ignoreOutgoingContent()
@@ -47,7 +49,7 @@ import {{packageName}}.auth.*
         val jsonConfig: JsonFeature.Config.() -> Unit = { this.serializer = this@ApiClient.serializer }
         val loggingConfig: Logging.Config.() -> Unit = {
             this.logger = Logger.SIMPLE
-            this.level = LogLevel.ALL
+            this.level = logLevel
         }
         val clientConfig: (HttpClientConfig<*>) -> Unit = {
             it.install(JsonFeature, jsonConfig)
