@@ -45,7 +45,7 @@ import {{packageName}}.auth.*
         serializer.ignoreOutgoingContent()
     }
 
-    private val client: HttpClient by lazy {
+    val client: HttpClient by lazy {
         val jsonConfig: JsonFeature.Config.() -> Unit = { this.serializer = this@ApiClient.serializer }
         val loggingConfig: Logging.Config.() -> Unit = {
             this.logger = Logger.SIMPLE
