@@ -343,7 +343,6 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
                 cm.vendorExtensions.put("x-has-data-class-body", true);
                 break;
             }
-
             for (CodegenProperty var : cm.vars) {
                 if (var.isEnum || isSerializableModel()) {
                     cm.vendorExtensions.put("x-has-data-class-body", true);
@@ -949,6 +948,32 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
         } else {
             return "\"" + escapeText(value) + "\"";
         }
+    }
+
+    public String getEnumDefaultValue(String datatype) {
+        if ("kotlin.Int".equals(datatype)) {
+            return "kotlin.Int.MIN_VALUE";
+        } else if ( "kotlin.Long".equals(datatype)) {
+            return "kotlin.Long.MIN_VALUE";
+        } else if ("kotlin.Double".equals(datatype)) {
+            return "kotlin.Double.MIN_VALUE";
+        } else if ("kotlin.Float".equals(datatype)) {
+            return "kotlin.Float.MIN_VALUE";
+        } else {
+            return "\"" + escapeText("UNKNOWN") + "\"";
+        }
+    }
+
+    @Override
+    public void updateCodegenPropertyEnum(CodegenProperty var) {
+        super.updateCodegenPropertyEnum(var);
+        String varDataType = var.mostInnerItems != null ? var.mostInnerItems.dataType : var.dataType;
+        Optional<Schema> referencedSchema = ModelUtils.getSchemas(openAPI).entrySet().stream()
+                .filter(entry -> Objects.equals(varDataType, toModelName(entry.getKey())))
+                .map(Map.Entry::getValue)
+                .findFirst();
+        String dataType = (referencedSchema.isPresent()) ? getTypeDeclaration(referencedSchema.get()) : varDataType;
+        var.vendorExtensions.put("x-enum-default-value", getEnumDefaultValue(dataType));
     }
 
     @Override

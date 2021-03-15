@@ -86,9 +86,10 @@ import java.io.Serializable
         {{/jackson}}
         {{/multiplatform}}
         {{#multiplatform}}
-        @SerialName(value = {{^isString}}"{{/isString}}{{{value}}}{{^isString}}"{{/isString}}) {{&name}}({{{value}}}){{^-last}},{{/-last}}{{#-last}};{{/-last}}
+        @SerialName(value = {{^isString}}"{{/isString}}{{{value}}}{{^isString}}"{{/isString}}) {{&name}}({{{value}}}),
         {{/multiplatform}}
     {{/enumVars}}
+        UNKNOWN({{{vendorExtensions.x-enum-default-value}}});
     {{/allowableValues}}
     }
 {{/isEnum}}

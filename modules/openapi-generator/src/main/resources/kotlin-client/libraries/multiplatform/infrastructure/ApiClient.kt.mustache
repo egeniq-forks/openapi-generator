@@ -36,6 +36,7 @@ import {{packageName}}.auth.*
             httpClientEngine: HttpClientEngine?,
             json: Json = Json {
                 ignoreUnknownKeys = true
+                coerceInputValues = true
                 isLenient = true
             },
             logLevel: LogLevel
