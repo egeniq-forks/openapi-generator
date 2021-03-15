@@ -32,6 +32,7 @@ import kotlinx.serialization.*
         httpClientEngine: HttpClientEngine? = null,
         json: Json = Json {
             ignoreUnknownKeys = true
+            coerceInputValues = true
             isLenient = true
         },
         logLevel: LogLevel
