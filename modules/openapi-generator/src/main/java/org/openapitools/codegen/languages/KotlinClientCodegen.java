@@ -234,7 +234,7 @@ public class KotlinClientCodegen extends AbstractKotlinCodegen {
         }
         this.useRxJava2 = useRxJava2;
     }
-    
+
     public void setUseRxJava3(boolean useRxJava3) {
         if (useRxJava3) {
             this.useRxJava = false;
@@ -367,7 +367,7 @@ public class KotlinClientCodegen extends AbstractKotlinCodegen {
             additionalProperties.put("isList", true);
         }
 
-        if(usesRetrofit2Library()) {
+        if (usesRetrofit2Library()) {
             if (ProcessUtils.hasOAuthMethods(openAPI)) {
                 supportingFiles.add(new SupportingFile("auth/ApiKeyAuth.kt.mustache", authFolder, "ApiKeyAuth.kt"));
                 supportingFiles.add(new SupportingFile("auth/OAuth.kt.mustache", authFolder, "OAuth.kt"));
@@ -375,11 +375,11 @@ public class KotlinClientCodegen extends AbstractKotlinCodegen {
                 supportingFiles.add(new SupportingFile("auth/OAuthOkHttpClient.kt.mustache", authFolder, "OAuthOkHttpClient.kt"));
             }
 
-            if(ProcessUtils.hasHttpBearerMethods(openAPI)) {
+            if (ProcessUtils.hasHttpBearerMethods(openAPI)) {
                 supportingFiles.add(new SupportingFile("auth/HttpBearerAuth.kt.mustache", authFolder, "HttpBearerAuth.kt"));
             }
-            
-            if(ProcessUtils.hasHttpBasicMethods(openAPI)) {
+
+            if (ProcessUtils.hasHttpBasicMethods(openAPI)) {
                 supportingFiles.add(new SupportingFile("auth/HttpBasicAuth.kt.mustache", authFolder, "HttpBasicAuth.kt"));
             }
         }
@@ -531,12 +531,14 @@ public class KotlinClientCodegen extends AbstractKotlinCodegen {
         importMapping.put("LocalTime", "kotlin.String");
         importMapping.put("Base64ByteArray", packageName + ".infrastructure.Base64ByteArray");
         importMapping.put("OctetByteArray", packageName + ".infrastructure.OctetByteArray");
+        importMapping.put("InputProviderWithFilename", packageName + ".infrastructure.InputProviderWithFilename");
 
         // multiplatform specific supporting files
         supportingFiles.add(new SupportingFile("infrastructure/Base64ByteArray.kt.mustache", infrastructureFolder, "Base64ByteArray.kt"));
         supportingFiles.add(new SupportingFile("infrastructure/Bytes.kt.mustache", infrastructureFolder, "Bytes.kt"));
         supportingFiles.add(new SupportingFile("infrastructure/HttpResponse.kt.mustache", infrastructureFolder, "HttpResponse.kt"));
         supportingFiles.add(new SupportingFile("infrastructure/OctetByteArray.kt.mustache", infrastructureFolder, "OctetByteArray.kt"));
+        supportingFiles.add(new SupportingFile("infrastructure/InputProviderWithFilename.kt.mustache", infrastructureFolder, "InputProviderWithFilename.kt"));
 
         // multiplatform specific auth
         supportingFiles.add(new SupportingFile("auth/ApiKeyAuth.kt.mustache", authFolder, "ApiKeyAuth.kt"));
@@ -642,7 +644,14 @@ public class KotlinClientCodegen extends AbstractKotlinCodegen {
                 if (MULTIPLATFORM.equals(getLibrary()) && operation.allParams != null) {
                     for (CodegenParameter param : operation.allParams) {
                         if (param.dataFormat != null && param.dataFormat.equals("binary")) {
-                            param.baseType = param.dataType = "io.ktor.client.request.forms.InputProvider";
+                            param.baseType = param.dataType = "InputProviderWithFilename";
+                        }
+                    }
+                    if (operation.formParams != null) {
+                        for (CodegenParameter formParam : operation.formParams) {
+                            if (formParam.dataFormat != null && formParam.dataFormat.equals("binary")) {
+                                formParam.vendorExtensions.put("x-kotlin-multipart-binary", true);
+                            }
                         }
                     }
                 }

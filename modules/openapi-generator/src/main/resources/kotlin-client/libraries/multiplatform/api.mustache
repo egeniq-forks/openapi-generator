@@ -59,7 +59,7 @@ import kotlinx.serialization.*
             {{#isMultipart}}
             formData {
                 {{#formParams}}
-                {{{paramName}}}?.apply { append("{{{baseName}}}", {{{paramName}}}) }
+                {{#vendorExtensions.x-kotlin-multipart-binary}}{{{paramName}}}?.apply { appendProvider("{{{baseName}}}", {{{paramName}}}) }{{/vendorExtensions.x-kotlin-multipart-binary}}{{^vendorExtensions.x-kotlin-multipart-binary}}{{{paramName}}}?.apply { append("{{{baseName}}}", {{{paramName}}}) }{{/vendorExtensions.x-kotlin-multipart-binary}}
                 {{/formParams}}
             }
             {{/isMultipart}}
