@@ -39,6 +39,7 @@ import {{packageName}}.auth.*
                 ignoreUnknownKeys = true
                 coerceInputValues = true
                 isLenient = true
+                useAlternativeNames = false
             },
             logLevel: LogLevel
     ) : this(baseUrl, httpClientEngine, KotlinxSerializer(json), logLevel)
