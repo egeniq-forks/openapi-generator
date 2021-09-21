@@ -1,0 +1,1 @@
+./mvnw -T 1C -Dmaven.javadoc.skip=true -Dmaven.test.skip -DskipTests clean install
