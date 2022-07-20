@@ -2,12 +2,14 @@ package {{packageName}}.infrastructure
 
 import io.ktor.client.request.forms.*
 import io.ktor.http.*
+import io.ktor.util.*
 
 data class InputProviderWithFilename(
     val inputProvider: InputProvider,
     val filename: String?
 )
 
+@OptIn(InternalAPI::class)
 fun FormBuilder.appendProvider(key: String, value: InputProviderWithFilename) {
     append(key, value.inputProvider, Headers.build {
         value.filename?.let { filename ->

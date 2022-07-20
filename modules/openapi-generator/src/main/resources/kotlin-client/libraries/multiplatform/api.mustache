@@ -7,8 +7,7 @@ package {{apiPackage}}
 import {{packageName}}.infrastructure.*
 import io.ktor.client.request.forms.formData
 import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.features.json.serializer.KotlinxSerializer
-import io.ktor.client.features.logging.*
+import io.ktor.client.plugins.logging.*
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -19,25 +18,11 @@ import io.ktor.http.ParametersBuilder
 import kotlinx.serialization.*
 
 {{#operations}}
-@ExperimentalStdlibApi
 {{#nonPublicApi}}internal {{/nonPublicApi}}class {{classname}} constructor(
     baseUrl: kotlin.String = "{{{basePath}}}",
     httpClientEngine: HttpClientEngine? = null,
-    serializer: KotlinxSerializer,
     logLevel: LogLevel
-) : ApiClient(baseUrl, httpClientEngine, serializer, logLevel) {
-
-    constructor(
-        baseUrl: kotlin.String = "{{{basePath}}}",
-        httpClientEngine: HttpClientEngine? = null,
-        json: Json = Json {
-            ignoreUnknownKeys = true
-            coerceInputValues = true
-            isLenient = true
-            useAlternativeNames = false
-        },
-        logLevel: LogLevel
-    ) : this(baseUrl, httpClientEngine, KotlinxSerializer(json), logLevel)
+) : ApiClient(baseUrl, httpClientEngine, logLevel) {
 
     {{#operation}}
     /**
