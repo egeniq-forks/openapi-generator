@@ -2,10 +2,13 @@ package {{packageName}}.infrastructure
 
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
+import io.ktor.client.call.call
 import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.logging.*
-import io.ktor.client.request.*
+import io.ktor.client.features.json.JsonFeature
+import io.ktor.client.features.json.JsonSerializer
+import io.ktor.client.features.json.serializer.KotlinxSerializer
+import io.ktor.client.features.logging.*
+import io.ktor.client.request.accept
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.header
@@ -16,10 +19,8 @@ import io.ktor.client.utils.EmptyContent
 import io.ktor.http.*
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.content.PartData
-import io.ktor.serialization.kotlinx.json.*
 import kotlinx.atomicfu.atomic
 import kotlinx.serialization.json.Json
-
 
 import {{apiPackage}}.*
 import {{modelPackage}}.*
@@ -28,22 +29,33 @@ import {{packageName}}.auth.*
 {{#nonPublicApi}}internal {{/nonPublicApi}}open class ApiClient(
         private val baseUrl: String,
         httpClientEngine: HttpClientEngine?,
+        serializer: KotlinxSerializer,
         logLevel: LogLevel) {
 
+    constructor(
+            baseUrl: String,
+            httpClientEngine: HttpClientEngine?,
+            json: Json = Json {
+                ignoreUnknownKeys = true
+                coerceInputValues = true
+                isLenient = true
+                useAlternativeNames = false
+            },
+            logLevel: LogLevel
+    ) : this(baseUrl, httpClientEngine, KotlinxSerializer(json), logLevel)
+
+    private val serializer: JsonSerializer by lazy {
+        serializer.ignoreOutgoingContent()
+    }
+
     val client: HttpClient by lazy {
+        val jsonConfig: JsonFeature.Config.() -> Unit = { this.serializer = this@ApiClient.serializer }
         val loggingConfig: Logging.Config.() -> Unit = {
             this.logger = Logger.SIMPLE
             this.level = logLevel
         }
         val clientConfig: (HttpClientConfig<*>) -> Unit = {
-            it.install(ContentNegotiation) {
-                json(Json {
-                    ignoreUnknownKeys = true
-                    coerceInputValues = true
-                    isLenient = true
-                    useAlternativeNames = false
-                })
-            }
+            it.install(JsonFeature, jsonConfig)
             it.install(Logging, loggingConfig)
         }
         httpClientEngine?.let { HttpClient(it, clientConfig) } ?: HttpClient(clientConfig)
@@ -143,6 +155,13 @@ import {{packageName}}.auth.*
         return request(requestConfig, FormDataContent(body ?: Parameters.Empty), authNames)
     }
 
+    protected suspend fun jsonRequest(requestConfig: RequestConfig, body: Any? = null, authNames: kotlin.collections.List<String>): HttpResponse {
+        val contentType = (requestConfig.headers[HttpHeaders.ContentType]?.let { ContentType.parse(it) }
+                ?: ContentType.Application.Json)
+        return if (body != null) request(requestConfig, serializer.write(body, contentType), authNames)
+        else request(requestConfig, authNames = authNames)
+    }
+
     protected suspend fun request(requestConfig: RequestConfig, body: OutgoingContent = EmptyContent, authNames: kotlin.collections.List<String>): HttpResponse {
         requestConfig.updateForAuth(authNames)
         var modifiedConfig = requestConfig
@@ -164,7 +183,7 @@ import {{packageName}}.auth.*
             this.method = modifiedConfig.method.httpMethod
             headers.filter { header -> !UNSAFE_HEADERS.contains(header.key) }.forEach { header -> this.header(header.key, header.value) }
             if (modifiedConfig.method in listOf(RequestMethod.PUT, RequestMethod.POST, RequestMethod.PATCH))
-                setBody(body)
+                this.body = body
 
         }
     }
@@ -190,4 +209,14 @@ import {{packageName}}.auth.*
             RequestMethod.POST -> HttpMethod.Post
             RequestMethod.OPTIONS -> HttpMethod.Options
         }
+}
+
+// https://github.com/ktorio/ktor/issues/851
+private fun JsonSerializer.ignoreOutgoingContent() = IgnoreOutgoingContentJsonSerializer(this)
+
+private class IgnoreOutgoingContentJsonSerializer(private val delegate: JsonSerializer) : JsonSerializer by delegate {
+    override fun write(data: Any): OutgoingContent {
+        if (data is OutgoingContent) return data
+        return delegate.write(data)
+    }
 }
