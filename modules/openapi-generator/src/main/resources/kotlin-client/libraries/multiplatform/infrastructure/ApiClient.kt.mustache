@@ -17,7 +17,6 @@ import io.ktor.http.*
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.content.PartData
 import io.ktor.serialization.kotlinx.json.*
-import kotlinx.atomicfu.atomic
 import kotlinx.serialization.json.Json
 
 
@@ -61,7 +60,7 @@ import {{packageName}}.auth.*
     private val authentications: kotlin.collections.Map<String, Authentication>? = null
     {{/hasAuthMethods}}
 
-    val requestTransformers = atomic(mutableListOf<RequestTransformer>())
+    val requestTransformers = mutableListOf<RequestTransformer>()
 
     {{#nonPublicApi}}internal {{/nonPublicApi}}companion object {
         protected val UNSAFE_HEADERS = listOf(HttpHeaders.ContentType)
@@ -146,7 +145,7 @@ import {{packageName}}.auth.*
     protected suspend fun request(requestConfig: RequestConfig, body: OutgoingContent = EmptyContent, authNames: kotlin.collections.List<String>): HttpResponse {
         requestConfig.updateForAuth(authNames)
         var modifiedConfig = requestConfig
-        requestTransformers.value.forEach {
+        requestTransformers.forEach {
             modifiedConfig = it.apply(modifiedConfig)
         }
         val headers = modifiedConfig.headers
