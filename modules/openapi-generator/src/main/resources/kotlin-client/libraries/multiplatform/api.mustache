@@ -64,9 +64,14 @@ import kotlinx.serialization.*
 
         val localVariableQuery = mutableMapOf<String, List<String>>()
         {{#queryParams}}
+        {{#isMapContainer}}
+        {{{paramName}}}?.apply { localVariableQuery.putAll(this.mapValues { listOf(it.value) }) }
+        {{/isMapContainer}}
+        {{^isMapContainer}}
         {{{paramName}}}?.apply { localVariableQuery["{{baseName}}"] = {{#isContainer}}toMultiValue(this, "{{collectionFormat}}"){{/isContainer}}{{^isContainer}}listOf("${{{paramName}}}"){{/isContainer}} }
+        {{/isMapContainer}}
         {{/queryParams}}
-
+    
         val localVariableHeaders = mutableMapOf<String, String>()
         {{#headerParams}}
         {{{paramName}}}?.apply { localVariableHeaders["{{baseName}}"] = {{#isContainer}}this.joinToString(separator = collectionDelimiter("{{collectionFormat}}")){{/isContainer}}{{^isContainer}}this.toString(){{/isContainer}} }
