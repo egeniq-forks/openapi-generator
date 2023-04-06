@@ -31,8 +31,15 @@ import {{packageName}}.auth.*
         httpClientEngine: HttpClientEngine?,
         logLevel: LogLevel) {
 
+    val jsonSerializer = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+        isLenient = true
+        useAlternativeNames = false
+    }
+
     private val serializer: JsonSerializer by lazy {
-        serializer.ignoreOutgoingContent()
+        KotlinxSerializer(jsonSerializer).ignoreOutgoingContent()
     }
 
     val client: HttpClient by lazy {
@@ -42,12 +49,7 @@ import {{packageName}}.auth.*
         }
         val clientConfig: (HttpClientConfig<*>) -> Unit = {
             it.install(ContentNegotiation) {
-                json(Json {
-                    ignoreUnknownKeys = true
-                    coerceInputValues = true
-                    isLenient = true
-                    useAlternativeNames = false
-                })
+                json(jsonSerializer)
             }
             it.install(Logging, loggingConfig)
         }
