@@ -371,7 +371,7 @@ public class InlineModelResolver {
      * @param key a unique name ofr the composed schema.
      * @param children the list of nested schemas within a composed schema (allOf, anyOf, oneOf).
      */
-    private void flattenComposedChildren(OpenAPI openAPI, String key, List<Schema> children) {
+    private void flattenComposedChildren(OpenAPI openAPI, String key, List<Schema> children, boolean setInternalOnly) {
         if (children == null || children.isEmpty()) {
             return;
         }
@@ -399,6 +399,11 @@ public class InlineModelResolver {
                     if (existing == null) {
                         openAPI.getComponents().addSchemas(innerModelName, innerModel);
                         addGenerated(innerModelName, innerModel);
+                        // if not parent and not yet set x-oag-internal-only
+                        // and setInternalOnly is true (only use case is allOf)
+                        if (setInternalOnly && !ModelUtils.isParent(innerModel) && !ModelUtils.isInternalOnlySet(innerModel)) {
+                            ModelUtils.setInternalOnly(innerModel, true);
+                        }
                         Schema schema = new Schema().$ref(innerModelName);
                         schema.setRequired(op.getRequired());
                         listIterator.set(schema);
@@ -431,9 +436,9 @@ public class InlineModelResolver {
             if (ModelUtils.isComposedSchema(model)) {
                 ComposedSchema m = (ComposedSchema) model;
                 // inline child schemas
-                flattenComposedChildren(openAPI, modelName + "_allOf", m.getAllOf());
-                flattenComposedChildren(openAPI, modelName + "_anyOf", m.getAnyOf());
-                flattenComposedChildren(openAPI, modelName + "_oneOf", m.getOneOf());
+                flattenComposedChildren(openAPI, modelName + "_allOf", m.getAllOf(), true);
+                flattenComposedChildren(openAPI, modelName + "_anyOf", m.getAnyOf(), false);
+                flattenComposedChildren(openAPI, modelName + "_oneOf", m.getOneOf(), false);
             } else if (model instanceof Schema) {
                 Schema m = (Schema) model;
                 Map<String, Schema> properties = m.getProperties();

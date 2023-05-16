@@ -550,6 +550,7 @@ public class DefaultCodegen implements CodegenConfig {
                         cp.isSelfReference = true;
                     }
                 }
+
             }
         }
         setCircularReferences(allModels);
@@ -2387,8 +2388,11 @@ public class DefaultCodegen implements CodegenConfig {
                         refSchema = allDefinitions.get(ref);
                     }
                     final String modelName = toModelName(ref);
-                    m.interfaces.add(modelName);
-                    addImport(m, modelName);
+                    // Ugly hack to make it work
+                    if (ref != null && !ref.endsWith("_allOf")) {
+                        m.interfaces.add(modelName);
+                        addImport(m, modelName);
+                    }
                     if (allDefinitions != null && refSchema != null) {
                         if (allParents.contains(ref) && supportsMultipleInheritance) {
                             // multiple inheritance
@@ -4647,13 +4651,13 @@ public class DefaultCodegen implements CodegenConfig {
      * of the 'additionalProperties' keyword. Some language generator use class inheritance
      * to implement additional properties. For example, in Java the generated model class
      * has 'extends HashMap' to represent the additional properties.
-     * 
+     *
      * TODO: it's not a good idea to use single class inheritance to implement
      * additionalProperties. That may work for non-composed schemas, but that does not
      * work for composed 'allOf' schemas. For example, in Java, if additionalProperties
      * is set to true (which it should be by default, per OAS spec), then the generated
      * code has extends HashMap. That wouldn't work for composed 'allOf' schemas.
-     * 
+     *
      * @param model the codegen representation of the OAS schema.
      * @param name the name of the model.
      * @param schema the input OAS schema.
@@ -6520,7 +6524,7 @@ public class DefaultCodegen implements CodegenConfig {
 
     /**
      * Returns the additionalProperties Schema for the specified input schema.
-     * 
+     *
      * The additionalProperties keyword is used to control the handling of additional, undeclared
      * properties, that is, properties whose names are not listed in the properties keyword.
      * The additionalProperties keyword may be either a boolean or an object.
@@ -6528,7 +6532,7 @@ public class DefaultCodegen implements CodegenConfig {
      * By default when the additionalProperties keyword is not specified in the input schema,
      * any additional properties are allowed. This is equivalent to setting additionalProperties
      * to the boolean value True or setting additionalProperties: {}
-     * 
+     *
      * @param schema the input schema that may or may not have the additionalProperties keyword.
      * @return the Schema of the additionalProperties. The null value is returned if no additional
      *         properties are allowed.

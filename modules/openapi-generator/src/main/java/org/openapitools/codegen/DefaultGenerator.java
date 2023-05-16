@@ -503,6 +503,11 @@ public class DefaultGenerator implements Generator {
                         // for PythonClientExperimentalCodegen, all aliases are generated as models
                         continue;  // Don't create user-defined classes for aliases
                     }
+
+                    if (Boolean.valueOf(String.valueOf(m.vendorExtensions.get("x-oag-internal-only")))) {
+                        LOGGER.info("Model {} not generated since it's marked as internal only (x-oag-internal-only: true).", modelName);
+                        continue;
+                    }
                 }
 
                 allModels.add(modelTemplate);

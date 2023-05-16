@@ -1553,4 +1553,67 @@ public class ModelUtils {
 
         return new SemVer(version);
     }
+
+
+    /**
+     * Returns true if the schema is a parent (with discriminator).
+     *
+     * @param schema the schema.
+     *
+     * @return true if the schema is a parent.
+     */
+    public static boolean isParent(Schema schema) {
+        if (schema != null && schema.getDiscriminator() != null) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns true if the schema marked as internal only.
+     *
+     * @param schema the schema.
+     *
+     * @return true if the schema is a parent.
+     */
+    public static boolean isInternalOnly(Schema schema) {
+        if (schema != null && schema.getExtensions() != null &&
+                Boolean.valueOf(String.valueOf(schema.getExtensions().get("x-oag-internal-only")))) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Sets extension "x-oag-internal-only" to true or false
+     * so as to mark the model as internal only accordingly.
+     *
+     * @param schema the schema.
+     * @param flag true or false.
+     *
+     */
+    public static void setInternalOnly(Schema schema, boolean flag) {
+        if (schema != null) {
+            schema.addExtension("x-oag-internal-only", true);
+        }
+    }
+
+    /**
+     * Returns true if the extension "x-oag-interal-only" is already set
+     *
+     * @param schema the schema.
+     *
+     * @return true if the extension "x-oag-interal-only" is already set.
+     *
+     */
+    public static boolean isInternalOnlySet(Schema schema) {
+        if (schema != null && schema.getExtensions() != null &&
+                schema.getExtensions().get("x-oag-internal-only") != null ) {
+            return true;
+        }
+
+        return false;
+    }
 }
