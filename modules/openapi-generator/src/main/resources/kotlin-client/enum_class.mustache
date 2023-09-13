@@ -32,6 +32,9 @@ import kotlinx.serialization.*
     @JsonProperty(value = {{^isString}}"{{/isString}}{{{value}}}{{^isString}}"{{/isString}})
     {{/jackson}}
     {{/multiplatform}}
+    {{#multiplatform}}
+    @SerialName(value = {{^isString}}"{{/isString}}{{{value}}}{{^isString}}"{{/isString}})
+    {{/multiplatform}}
     {{#isListContainer}}{{#isList}}{{&name}}(listOf({{{value}}})),{{/isList}}{{^isList}}{{&name}}(arrayOf({{{value}}})),{{/isList}}{{/isListContainer}}{{^isListContainer}}{{&name}}({{{value}}}),{{/isListContainer}}
 {{/enumVars}}
     UNKNOWN({{{vendorExtensions.x-enum-default-value}}});
