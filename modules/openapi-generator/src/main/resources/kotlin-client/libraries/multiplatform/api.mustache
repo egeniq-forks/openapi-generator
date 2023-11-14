@@ -35,7 +35,7 @@ import kotlinx.serialization.*
     @Suppress("UNCHECKED_CAST")
     {{/returnType}}
     @Throws(Exception::class)
-    suspend fun {{operationId}}({{#allParams}}{{{paramName}}}: {{{dataType}}}{{^required}}?{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}}): HttpResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Unit{{/returnType}}> {
+    suspend fun {{operationId}}({{#allParams}}{{{paramName}}}: {{{dataType}}}{{^required}}?{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}}{{^hasFormParams}}{{#isMultipart}}, fields: Map<String, Any>{{/isMultipart}}{{/hasFormParams}}): HttpResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Unit{{/returnType}}> {
 
         val localVariableAuthNames = listOf<String>({{#authMethods}}"{{name}}"{{#hasMore}}, {{/hasMore}}{{/authMethods}})
 
@@ -58,7 +58,22 @@ import kotlinx.serialization.*
             {{/isMultipart}}
             {{/hasFormParams}}
             {{^hasFormParams}}
+            {{#isMultipart}}
+            formData {
+                fields.forEach { field ->
+                    when (val value = field.value) {
+                        is InputProviderWithFilename -> appendProvider(field.key, value)
+                        is String -> append(field.key, value)
+                        is Number -> append(field.key, value)
+                        is Boolean -> append(field.key, value)
+                        is ByteArray -> append(field.key, value)
+                    }
+                }
+            }
+            {{/isMultipart}}
+            {{^isMultipart}}
             io.ktor.client.utils.EmptyContent
+            {{/isMultipart}}
             {{/hasFormParams}}
             {{/hasBodyParam}}
 
@@ -84,7 +99,7 @@ import kotlinx.serialization.*
             headers = localVariableHeaders
         )
 
-        return {{#hasBodyParam}}jsonRequest{{/hasBodyParam}}{{^hasBodyParam}}{{#hasFormParams}}{{#isMultipart}}multipartFormRequest{{/isMultipart}}{{^isMultipart}}urlEncodedFormRequest{{/isMultipart}}{{/hasFormParams}}{{^hasFormParams}}request{{/hasFormParams}}{{/hasBodyParam}}(
+        return {{#hasBodyParam}}jsonRequest{{/hasBodyParam}}{{^hasBodyParam}}{{#hasFormParams}}{{#isMultipart}}multipartFormRequest{{/isMultipart}}{{^isMultipart}}urlEncodedFormRequest{{/isMultipart}}{{/hasFormParams}}{{^hasFormParams}}{{#isMultipart}}multipartFormRequest{{/isMultipart}}{{^isMultipart}}request{{/isMultipart}}{{/hasFormParams}}{{/hasBodyParam}}(
             localVariableConfig,
             localVariableBody,
             localVariableAuthNames
