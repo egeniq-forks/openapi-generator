@@ -6,7 +6,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
-@Serializable
+@Serializable(Base64ByteArray.Companion::class)
 class Base64ByteArray(val value: ByteArray) {
     @ExperimentalSerializationApi
     @Serializer(Base64ByteArray::class)
