@@ -67,6 +67,7 @@ import kotlinx.serialization.*
                         is Number -> append(field.key, value)
                         is Boolean -> append(field.key, value)
                         is ByteArray -> append(field.key, value)
+                        is MutableList<*> -> append(field.key, value as MutableList<String>)
                     }
                 }
             }
