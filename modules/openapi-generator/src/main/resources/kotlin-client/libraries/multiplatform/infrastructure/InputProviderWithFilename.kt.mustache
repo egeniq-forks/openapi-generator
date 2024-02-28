@@ -13,7 +13,7 @@ data class InputProviderWithFilename(
 fun FormBuilder.appendProvider(key: String, value: InputProviderWithFilename) {
     append(key, value.inputProvider, Headers.build {
         value.filename?.let { filename ->
-            append(HttpHeaders.ContentDisposition, ContentDisposition("filename=$filename"))
+            append(HttpHeaders.ContentDisposition, ContentDisposition("filename=\"$filename\""))
         }
     })
 }
