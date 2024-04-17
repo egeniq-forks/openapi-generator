@@ -14,6 +14,11 @@ fun FormBuilder.appendProvider(key: String, value: InputProviderWithFilename) {
     append(key, value.inputProvider, Headers.build {
         value.filename?.let { filename ->
             append(HttpHeaders.ContentDisposition, ContentDisposition("filename=\"$filename\""))
+            when {
+                filename.endsWith(".jpg") || filename.endsWith(".jpeg") -> append(HttpHeaders.ContentType, ContentType("image", "jpg"))
+                filename.endsWith(".png") -> append(HttpHeaders.ContentType, ContentType("image", "png"))
+                filename.endsWith(".mp4") -> append(HttpHeaders.ContentType, ContentType("video", "mp4"))
+            }
         }
     })
 }

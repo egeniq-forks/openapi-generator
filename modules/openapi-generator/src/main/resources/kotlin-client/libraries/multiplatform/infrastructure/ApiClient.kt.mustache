@@ -3,6 +3,8 @@ package {{packageName}}.infrastructure
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.plugins.auth.*
+import io.ktor.client.plugins.auth.providers.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.json.*
 import io.ktor.client.plugins.kotlinx.serializer.*
@@ -20,16 +22,24 @@ import io.ktor.http.content.OutgoingContent
 import io.ktor.http.content.PartData
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
-
-
 import {{apiPackage}}.*
 import {{modelPackage}}.*
 import {{packageName}}.auth.*
 
+data class ApiClientAuthProvider(
+    val getInitialTokens: suspend () -> BearerTokens?,
+    val onRefreshTokens: suspend () -> BearerTokens?,
+    val onRefreshTokensFailed: suspend () -> Unit
+)
+
 {{#nonPublicApi}}internal {{/nonPublicApi}}open class ApiClient(
         private val baseUrl: String,
-        httpClientEngine: HttpClientEngine?,
-        logLevel: LogLevel) {
+        private val httpClientEngine: HttpClientEngine?,
+        private val logLevel: LogLevel
+) {
+
+    private var authEnabled = true
+    private lateinit var authProvider: ApiClientAuthProvider
 
     val jsonSerializer = Json {
         ignoreUnknownKeys = true
@@ -42,7 +52,7 @@ import {{packageName}}.auth.*
         KotlinxSerializer(jsonSerializer).ignoreOutgoingContent()
     }
 
-    val client: HttpClient by lazy {
+    val httpClient: HttpClient by lazy {
         val loggingConfig: Logging.Config.() -> Unit = {
             this.logger = Logger.SIMPLE
             this.level = logLevel
@@ -52,6 +62,24 @@ import {{packageName}}.auth.*
                 json(jsonSerializer)
             }
             it.install(Logging, loggingConfig)
+            if (authEnabled) {
+                it.install(Auth) {
+                    bearer {
+                        loadTokens {
+                            authProvider.getInitialTokens()
+                        }
+
+                        refreshTokens {
+                            val newTokens = authProvider.onRefreshTokens()
+                            if (newTokens == null) {
+                                authProvider.onRefreshTokensFailed()
+                            }
+
+                            newTokens
+                        }
+                    }
+                }
+            }
         }
         httpClientEngine?.let { HttpClient(it, clientConfig) } ?: HttpClient(clientConfig)
     }
@@ -72,6 +100,11 @@ import {{packageName}}.auth.*
 
     {{#nonPublicApi}}internal {{/nonPublicApi}}companion object {
         protected val UNSAFE_HEADERS = listOf(HttpHeaders.ContentType)
+    }
+
+    fun setupAuthProvider(authProvider: ApiClientAuthProvider, authEnabled: Boolean) {
+        this.authProvider = authProvider
+        this.authEnabled = authEnabled
     }
 
     /**
@@ -165,7 +198,7 @@ import {{packageName}}.auth.*
         }
         val headers = modifiedConfig.headers
 
-        return client.request {
+        return httpClient.request {
             this.url {
                 this.takeFrom(URLBuilder(baseUrl))
                 appendPath(modifiedConfig.path.trimStart('/').split('/'))
