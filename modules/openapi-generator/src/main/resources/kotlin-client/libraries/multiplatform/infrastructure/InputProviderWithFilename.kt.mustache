@@ -17,6 +17,9 @@ fun FormBuilder.appendProvider(key: String, value: InputProviderWithFilename) {
             when {
                 filename.endsWith(".jpg") || filename.endsWith(".jpeg") -> append(HttpHeaders.ContentType, ContentType("image", "jpg"))
                 filename.endsWith(".png") -> append(HttpHeaders.ContentType, ContentType("image", "png"))
+                filename.endsWith(".webp") -> append(HttpHeaders.ContentType, ContentType("image", "webp"))
+                filename.endsWith(".bmp") -> append(HttpHeaders.ContentType, ContentType("image", "bmp"))
+                filename.endsWith(".gif") -> append(HttpHeaders.ContentType, ContentType("image", "gif"))
                 filename.endsWith(".mp4") -> append(HttpHeaders.ContentType, ContentType("video", "mp4"))
             }
         }

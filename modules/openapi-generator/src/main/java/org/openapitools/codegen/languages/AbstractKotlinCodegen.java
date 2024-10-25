@@ -545,8 +545,9 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
                 modified = underscore(modified).toUpperCase(Locale.ROOT);
                 break;
         }
-
-        if (reservedWords.contains(modified)) {
+        if ("ordinal".equals(modified) || "name".equals(modified)) {
+            return "_" + modified;
+        } else if (reservedWords.contains(modified)) {
             return escapeReservedWord(modified);
         }
         // NOTE: another sanitize because camelize can create an invalid name
