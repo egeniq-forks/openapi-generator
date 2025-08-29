@@ -35,7 +35,7 @@ import kotlinx.serialization.*
     @Suppress("UNCHECKED_CAST")
     {{/returnType}}
     @Throws(Exception::class)
-    suspend fun {{operationId}}({{#allParams}}{{{paramName}}}: {{{dataType}}}{{^required}}?{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}}{{^hasFormParams}}{{#isMultipart}}, fields: Map<String, Any>{{/isMultipart}}{{/hasFormParams}}): HttpResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Unit{{/returnType}}> {
+    suspend fun {{operationId}}({{#allParams}}{{{paramName}}}: {{{dataType}}}{{^required}}?{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}}{{#isMultipart}}, fields: Map<String, Any>{{/isMultipart}}): HttpResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Unit{{/returnType}}> {
 
         val localVariableAuthNames = listOf<String>({{#authMethods}}"{{name}}"{{#hasMore}}, {{/hasMore}}{{/authMethods}})
 
@@ -44,6 +44,16 @@ import kotlinx.serialization.*
             {{#hasFormParams}}
             {{#isMultipart}}
             formData {
+                fields.forEach { field ->
+                    when (val value = field.value) {
+                        is InputProviderWithFilename -> appendProvider(field.key, value)
+                        is String -> append(field.key, value)
+                        is Number -> append(field.key, value)
+                        is Boolean -> append(field.key, value)
+                        is ByteArray -> append(field.key, value)
+                        is MutableList<*> -> append(field.key, "[${value.joinToString(", ") { "\"$it\"" }}]")
+                    }
+                }
                 {{#formParams}}
                 {{#vendorExtensions.x-kotlin-multipart-binary}}{{{paramName}}}?.apply { appendProvider("{{{baseName}}}", {{{paramName}}}) }{{/vendorExtensions.x-kotlin-multipart-binary}}{{^vendorExtensions.x-kotlin-multipart-binary}}{{{paramName}}}?.apply { append("{{{baseName}}}", {{{paramName}}}) }{{/vendorExtensions.x-kotlin-multipart-binary}}
                 {{/formParams}}
@@ -67,7 +77,7 @@ import kotlinx.serialization.*
                         is Number -> append(field.key, value)
                         is Boolean -> append(field.key, value)
                         is ByteArray -> append(field.key, value)
-                        is MutableList<*> -> append(field.key, value as MutableList<String>)
+                        is MutableList<*> -> append(field.key, "[${value.joinToString(", ") { "\"$it\"" }}]")
                     }
                 }
             }

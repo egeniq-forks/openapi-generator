@@ -16,9 +16,7 @@ import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.request
 import io.ktor.client.statement.HttpResponse
-import io.ktor.client.utils.EmptyContent
 import io.ktor.http.*
-import io.ktor.http.content.OutgoingContent
 import io.ktor.http.content.PartData
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
@@ -29,7 +27,7 @@ import {{packageName}}.auth.*
 data class ApiClientAuthProvider(
     val getInitialTokens: suspend () -> BearerTokens?,
     val onRefreshTokens: suspend () -> BearerTokens?,
-    val onRefreshTokensFailed: suspend () -> Unit
+    val onRefreshTokensFailed: suspend () -> Unit,
 )
 
 {{#nonPublicApi}}internal {{/nonPublicApi}}open class ApiClient(
@@ -48,20 +46,15 @@ data class ApiClientAuthProvider(
         useAlternativeNames = false
     }
 
-    private val serializer: JsonSerializer by lazy {
-        KotlinxSerializer(jsonSerializer).ignoreOutgoingContent()
-    }
-
     val httpClient: HttpClient by lazy {
-        val loggingConfig: Logging.Config.() -> Unit = {
-            this.logger = Logger.SIMPLE
-            this.level = logLevel
-        }
         val clientConfig: (HttpClientConfig<*>) -> Unit = {
             it.install(ContentNegotiation) {
                 json(jsonSerializer)
             }
-            it.install(Logging, loggingConfig)
+            it.install(Logging) {
+                logger = Logger.SIMPLE
+                level = logLevel
+            }
             if (authEnabled) {
                 it.install(Auth) {
                     bearer {
@@ -183,14 +176,10 @@ data class ApiClientAuthProvider(
         return request(requestConfig, FormDataContent(body ?: Parameters.Empty), authNames)
     }
 
-    protected suspend fun jsonRequest(requestConfig: RequestConfig, body: Any? = null, authNames: kotlin.collections.List<String>): HttpResponse {
-        val contentType = (requestConfig.headers[HttpHeaders.ContentType]?.let { ContentType.parse(it) }
-        ?: ContentType.Application.Json)
-        return if (body != null) request(requestConfig, serializer.write(body, contentType), authNames)
-        else request(requestConfig, authNames = authNames)
-    }
+    protected suspend fun jsonRequest(requestConfig: RequestConfig, body: Any? = null, authNames: kotlin.collections.List<String>): HttpResponse =
+        request(requestConfig, body, authNames)
 
-    protected suspend fun request(requestConfig: RequestConfig, body: OutgoingContent = EmptyContent, authNames: kotlin.collections.List<String>): HttpResponse {
+    protected suspend fun request(requestConfig: RequestConfig, body: Any? = null, authNames: kotlin.collections.List<String>): HttpResponse {
         requestConfig.updateForAuth(authNames)
         var modifiedConfig = requestConfig
         requestTransformers.forEach {
@@ -237,14 +226,4 @@ data class ApiClientAuthProvider(
             RequestMethod.POST -> HttpMethod.Post
             RequestMethod.OPTIONS -> HttpMethod.Options
         }
-}
-
-// https://github.com/ktorio/ktor/issues/851
-private fun JsonSerializer.ignoreOutgoingContent() = IgnoreOutgoingContentJsonSerializer(this)
-
-private class IgnoreOutgoingContentJsonSerializer(private val delegate: JsonSerializer) : JsonSerializer by delegate {
-    override fun write(data: Any): OutgoingContent {
-        if (data is OutgoingContent) return data
-        return delegate.write(data)
-    }
 }
