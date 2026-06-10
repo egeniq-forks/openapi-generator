@@ -3,6 +3,7 @@ package {{packageName}}.infrastructure
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.auth.*
 import io.ktor.client.plugins.auth.providers.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -23,6 +24,8 @@ import kotlinx.serialization.json.Json
 import {{apiPackage}}.*
 import {{modelPackage}}.*
 import {{packageName}}.auth.*
+import {{packageName}}.platformName
+
 
 data class ApiClientAuthProvider(
     val getInitialTokens: suspend () -> BearerTokens?,
@@ -38,6 +41,8 @@ data class ApiClientAuthProvider(
 
     private var authEnabled = true
     private lateinit var authProvider: ApiClientAuthProvider
+
+    var overrideUserAgent: String? = null
 
     val jsonSerializer = Json {
         ignoreUnknownKeys = true
@@ -72,6 +77,9 @@ data class ApiClientAuthProvider(
                         }
                     }
                 }
+            }
+            it.install(UserAgent) {
+                agent = overrideUserAgent ?: "ktor-client-${platformName()}"
             }
         }
         httpClientEngine?.let { HttpClient(it, clientConfig) } ?: HttpClient(clientConfig)

@@ -46,12 +46,13 @@ import kotlinx.serialization.*
             formData {
                 fields.forEach { field ->
                     when (val value = field.value) {
+                        is UploadFileData -> append(field.key, value.fileLocation ?: "")
                         is InputProviderWithFilename -> appendProvider(field.key, value)
                         is String -> append(field.key, value)
                         is Number -> append(field.key, value)
                         is Boolean -> append(field.key, value)
                         is ByteArray -> append(field.key, value)
-                        is MutableList<*> -> append(field.key, "[${value.joinToString(", ") { "\"$it\"" }}]")
+                        is List<*> -> append(field.key, "[${value.joinToString(", ") { "\"$it\"" }}]")
                     }
                 }
                 {{#formParams}}
@@ -72,12 +73,13 @@ import kotlinx.serialization.*
             formData {
                 fields.forEach { field ->
                     when (val value = field.value) {
+                        is UploadFileData -> append(field.key, value.fileLocation ?: "")
                         is InputProviderWithFilename -> appendProvider(field.key, value)
                         is String -> append(field.key, value)
                         is Number -> append(field.key, value)
                         is Boolean -> append(field.key, value)
                         is ByteArray -> append(field.key, value)
-                        is MutableList<*> -> append(field.key, "[${value.joinToString(", ") { "\"$it\"" }}]")
+                        is List<*> -> append(field.key, "[${value.joinToString(", ") { "\"$it\"" }}]")
                     }
                 }
             }
